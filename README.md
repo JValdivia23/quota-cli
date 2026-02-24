@@ -19,7 +19,7 @@ Ensure you have [Go 1.25+](https://go.dev/) or newer installed.
 You can download a pre-compiled, ready-to-run binary for Windows (`.exe`), macOS, and Linux directly from our [GitHub Releases page](https://github.com/JValdivia23/quota-cli/releases). 
 Just download the right file for your operating system, extract it, and run `qcli`!
 
-### Method 2: Homebrew (macOS & Linux)
+### Method 2: Homebrew (macOS & Linux) [available soon]
 
 If you are using [Homebrew](https://brew.sh/), you can easily install the CLI using:
 ```bash
@@ -78,4 +78,4 @@ Simply run the commands via the output binary:
 
 ## License
 
-*(License to be determined - e.g. MIT / Apache 2.0)*
+This project is licensed under the [MIT License](LICENSE).
