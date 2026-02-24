@@ -30,21 +30,9 @@ func PrintTable(reports []*models.ProviderReport) {
 		}
 
 		if req.Type == models.TypeQuotaBased {
-			used := req.Entitlement - req.Remaining
-			usagePct := 0
-			if req.Entitlement > 0 {
-				usagePct = (used * 100) / req.Entitlement
-			}
-			usageStr := fmt.Sprintf("%d%%", usagePct)
-
-			refreshStr := req.RefreshTime
-			if refreshStr == "" {
-				refreshStr = "-"
-			}
-
-			metricStr := fmt.Sprintf("%d/%d remaining", req.Remaining, req.Entitlement)
-
 			if len(req.Accounts) > 0 {
+				// Multi-account display (e.g. Antigravity with Claude + Gemini sub-rows)
+				fmt.Fprintf(w, "%s\t\t\t\n", req.Name)
 				for _, acc := range req.Accounts {
 					accUsed := acc.Entitlement - acc.Remaining
 					accUsagePct := 0
@@ -53,11 +41,22 @@ func PrintTable(reports []*models.ProviderReport) {
 					}
 					accUsageStr := fmt.Sprintf("%d%%", accUsagePct)
 					accMetricStr := fmt.Sprintf("%d/%d remaining", acc.Remaining, acc.Entitlement)
-					fmt.Fprintf(w, "%s (%s)\t%s\t%s\t%s\n", req.Name, acc.Email, refreshStr, accUsageStr, accMetricStr)
+					fmt.Fprintf(w, "  ↳\t%s\t%s\t%s\n", acc.Email, accUsageStr, accMetricStr)
 				}
-			} else {
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", req.Name, refreshStr, usageStr, metricStr)
+				continue
 			}
+			// Single-account quota display
+			used := req.Entitlement - req.Remaining
+			usagePct := 0
+			if req.Entitlement > 0 {
+				usagePct = (used * 100) / req.Entitlement
+			}
+			refreshStr := req.RefreshTime
+			if refreshStr == "" {
+				refreshStr = "-"
+			}
+			fmt.Fprintf(w, "%s\t%s\t%d%%\t%d/%d remaining\n",
+				req.Name, refreshStr, usagePct, req.Remaining, req.Entitlement)
 		} else if req.Type == models.TypeTokensBased {
 			// Tokens based metric
 			refreshStr := req.RefreshTime
