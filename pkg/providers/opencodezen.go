@@ -48,7 +48,12 @@ func (o *OpenCodeZenProvider) Fetch(ctx context.Context, cfg *models.OpenCodeAut
 }
 
 func (o *OpenCodeZenProvider) findToken(cfg *models.OpenCodeAuthConfig) (string, error) {
-	// 1. Try local SQLite DB (opencode.db control_account table)
+	// 1. Use token pre-discovered by auth.DiscoverOpenCodeAuth (avoids re-opening the DB)
+	if t, ok := cfg.RawKeys["opencode-zen-token"].(string); ok && t != "" {
+		return t, nil
+	}
+
+	// 2. Fallback: re-query the SQLite DB directly
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -66,26 +71,20 @@ func (o *OpenCodeZenProvider) findToken(cfg *models.OpenCodeAuthConfig) (string,
 			continue
 		}
 		defer db.Close()
-
 		var token string
-		err = db.QueryRow(`SELECT access_token FROM control_account WHERE active=1 ORDER BY time_updated DESC LIMIT 1`).Scan(&token)
-		if err == nil && token != "" {
-			return token, nil
-		}
-		// Try any account
-		err = db.QueryRow(`SELECT access_token FROM control_account ORDER BY time_updated DESC LIMIT 1`).Scan(&token)
-		if err == nil && token != "" {
-			return token, nil
+		for _, q := range []string{
+			`SELECT access_token FROM control_account WHERE active=1 ORDER BY time_updated DESC LIMIT 1`,
+			`SELECT access_token FROM control_account ORDER BY time_updated DESC LIMIT 1`,
+		} {
+			if err := db.QueryRow(q).Scan(&token); err == nil && token != "" {
+				return token, nil
+			}
 		}
 	}
 
-	// 2. Fallback: check auth.json for a "zen" or "z.ai" key
-	token := cfg.GetNestedField("zen", "access")
-	if token == "" {
-		token = cfg.GetNestedField("opencode", "access")
-	}
-	if token != "" {
-		return token, nil
+	// 3. Fallback: check auth.json for a "zen" token
+	if t := cfg.GetNestedField("zen", "access"); t != "" {
+		return t, nil
 	}
 
 	return "", fmt.Errorf("token not found in DB or auth.json")
