@@ -1,0 +1,34 @@
+name: release
+
+on:
+  push:
+    tags:
+      - '*' # Triggers the workflow when a git tag like `v1.0.0` is pushed
+
+permissions:
+  contents: write # Needed for creating GitHub Releases
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Important for GoReleaser to generate correct changelogs
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Uncomment the line below if you decide to publish to a Homebrew tap repository
+          # TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
