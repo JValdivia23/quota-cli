@@ -63,6 +63,53 @@ Simply run the commands via the output binary:
 - **`qcli report`**: Generates a deep-dive analysis, showing weighted 7-day usage history and monthly forecasts.
 - **`qcli list`**: Lists all AI providers where local authentication is successfully detected.
 
+### Example
+
+Here is an example of running the basic `qcli` command to view your real-time quota usage across different providers:
+
+```bash
+$ qcli
+Provider            Refresh            Use         Key Metrics
+───────────         ───────────────    ────────    ────────────────
+GitHub Copilot      Monthly            62%         113/300 remaining
+Google AI Studio    Tomorrow           50%         50/100 remaining
+OpenAI              Weekly             20%         80/100 remaining
+OpenRouter          -                  -           $0.00 spent
+```
+
+And viewing a forecasted report:
+
+```bash
+$ qcli report
+Analyzing usage patterns and generating forecasts...
+
+--- Google AI Studio ------------------------------------------
+  Current Usage:    50/100 (50%)
+  Trend Analysis:   Insufficient historical data for this provider.
+
+--- OpenAI ------------------------------------------
+  Current Usage:    20/100 (20%)
+  Trend Analysis:   Insufficient historical data for this provider.
+
+--- OpenRouter ------------------------------------------
+  Current Usage:    0/0 (0%)
+  Trend Analysis:   Insufficient historical data for this provider.
+
+--- GitHub Copilot ------------------------------------------
+  Current Usage:           187/300 (62%)
+  Forecasted Monthly:      228 requests
+  Estimated Overage:       $0.00 (Within Quota)
+  Prediction Confidence:   High
+  Recent Activity:
+    - 2026-02-23:   12 requests
+    - 2026-02-22:   15 requests
+    - 2026-02-21:   8 requests
+    - 2026-02-20:   2 requests
+    - 2026-02-19:   1 requests
+
+Note: Predictions are estimates based on your recent 7-day weighted usage patterns.
+```
+
 ## Project Structure
 
 - `cmd/`: Core Cobra CLI commands (`cmd/quota` module).
