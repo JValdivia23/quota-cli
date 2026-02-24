@@ -1,128 +1,131 @@
-# quota-cli (qcli)
+# qcli — AI Quota CLI
 
-A fast, cross-platform command-line tool written in Go to measure, report on, and forecast your API usage quotas across various AI providers, including Claude, Gemini, Google AI Studio, OpenAI, OpenRouter, and Vertex AI.
+A fast, cross-platform CLI written in Go that **auto-discovers your AI provider credentials** and displays real-time quota and cost information in a single unified table.
 
-## Features
+Supports: **Claude · ChatGPT/OpenAI · GitHub Copilot · Gemini CLI · OpenRouter · Vertex AI · OpenCode Zen**
 
-- **Multi-Provider Support**: Seamlessly displays your usage and quota information for leading AI models in a single unified view.
-- **Reporting & Forecasting**: Uses a weighted-average algorithm (with weekend compensation) to predict monthly totals, overage costs, and multi-day trends.
-- **Auto-Discovery for Auth**: Automatically detects standards OpenCode token paths (`auth.json`, `antigravity-accounts.json`) to safely discover API keys—no manual `.env` file configuration needed.
-
-## Installation
-
-### Prerequisites
-
-Ensure you have [Go 1.25+](https://go.dev/) or newer installed.
-
-### Method 1: Pre-compiled Binaries (Easiest for most users)
-
-You can download a pre-compiled, ready-to-run binary for Windows (`.exe`), macOS, and Linux directly from our [GitHub Releases page](https://github.com/JValdivia23/quota-cli/releases). 
-Just download the right file for your operating system, extract it, and run `qcli`!
-
-### Method 2: Homebrew (macOS & Linux) [available soon]
-
-If you are using [Homebrew](https://brew.sh/), you can easily install the CLI using:
-```bash
-brew tap JValdivia23/tap
-brew install quota-cli
 ```
-*(Note: To enable Homebrew support, a separate `homebrew-tap` repository needs to be created first).*
+Provider           Refresh                  Use    Key Metrics
+────────────────   ──────────────────────   ────   ────────────────────
+GitHub Copilot     Monthly: in 4d (03/01)   62%    113/300 remaining
+OpenAI             Weekly: in 6d (03/03)    0%     100/100 remaining
+OpenRouter         -                        -      $0.00 spent
+Vertex AI          Monthly                  -      0 tokens used
+```
 
-### Method 3: Via Go Install
+---
 
-If you already have Go installed, you can simply run:
+## Install
+
+### Option 1 — Shell script (macOS & Linux, no dependencies)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/JValdivia23/quota-cli/main/install.sh | sh
+```
+
+Installs the latest release binary to `/usr/local/bin`. Override with:
+```bash
+INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/JValdivia23/quota-cli/main/install.sh | sh
+```
+
+### Option 2 — Homebrew (macOS & Linux)
+
+```bash
+brew tap JValdivia23/opencode-bar-curated
+brew install qcli
+```
+
+### Option 3 — `go install` (requires Go 1.21+)
 
 ```bash
 go install github.com/JValdivia23/quota-cli@latest
 ```
-*Note: Make sure your `GOPATH/bin` is in your system's `$PATH` so you can use the `quota-cli` command globally.*
 
-### Method 4: Build from Source
+Make sure `$(go env GOPATH)/bin` is in your `$PATH`:
+```bash
+export PATH="$PATH:$(go env GOPATH)/bin"   # add to ~/.zshrc or ~/.bashrc
+```
 
-1. Clone the repository
-   ```bash
-   git clone https://github.com/JValdivia23/quota-cli.git
-   cd quota-cli
-   ```
+### Option 4 — Download binary from GitHub Releases
 
-2. Build the executable
-   ```bash
-   go build -o qcli main.go
-   ```
+Download the right archive for your platform from [GitHub Releases](https://github.com/JValdivia23/quota-cli/releases), extract, and move the `qcli` binary somewhere on your PATH.
 
-3. (Optional) Move the compiled binary (`qcli`) into a directory inside your system's PATH. For example:
-   ```bash
-   mv qcli /usr/local/bin/
-   ```
+| Platform | Archive |
+|---|---|
+| macOS (Apple Silicon) | `qcli_Darwin_arm64.tar.gz` |
+| macOS (Intel) | `qcli_Darwin_x86_64.tar.gz` |
+| Linux (x86_64) | `qcli_Linux_x86_64.tar.gz` |
+| Windows | `qcli_Windows_x86_64.zip` |
+
+### Option 5 — Build from source
+
+```bash
+git clone https://github.com/JValdivia23/quota-cli.git
+cd quota-cli
+go build -o qcli main.go
+sudo mv qcli /usr/local/bin/   # or: mv qcli ~/bin/
+```
+
+---
 
 ## Usage
 
-Simply run the commands via the output binary:
-
-- **`qcli`**: The default command. Fetches and displays a live snapshot of all your active AI providers.
-- **`qcli report`**: Generates a deep-dive analysis, showing weighted 7-day usage history and monthly forecasts.
-- **`qcli list`**: Lists all AI providers where local authentication is successfully detected.
-
-### Example
-
-Here is an example of running the basic `qcli` command to view your real-time quota usage across different providers:
-
 ```bash
-$ qcli
-Provider            Refresh            Use         Key Metrics
-───────────         ───────────────    ────────    ────────────────
-GitHub Copilot      Monthly            62%         113/300 remaining
-Google AI Studio    Tomorrow           50%         50/100 remaining
-OpenAI              Weekly             20%         80/100 remaining
-OpenRouter          -                  -           $0.00 spent
+qcli              # Show all detected providers (same as qcli status)
+qcli status       # Show quota and cost for every discovered provider
+qcli status -j    # Output as JSON
+qcli list         # List which providers were auto-detected
+qcli report       # Deep-dive with 7-day trend and monthly forecast
 ```
 
-And viewing a forecasted report:
+---
 
-```bash
-$ qcli report
-Analyzing usage patterns and generating forecasts...
+## Credential discovery (zero config)
 
---- Google AI Studio ------------------------------------------
-  Current Usage:    50/100 (50%)
-  Trend Analysis:   Insufficient historical data for this provider.
+`qcli` searches for credentials automatically — no `.env` file required:
 
---- OpenAI ------------------------------------------
-  Current Usage:    20/100 (20%)
-  Trend Analysis:   Insufficient historical data for this provider.
+| Source | What it provides |
+|---|---|
+| `~/.local/share/opencode/auth.json` | OpenAI, OpenRouter, Copilot, Gemini |
+| `antigravity-accounts.json` | Claude + Gemini OAuth tokens |
+| `$OPENAI_API_KEY` | OpenAI |
+| `$ANTHROPIC_API_KEY` | Claude |
+| `$OPENROUTER_API_KEY` | OpenRouter |
+| `$GITHUB_TOKEN` / `$COPILOT_TOKEN` | GitHub Copilot |
+| `$GEMINI_API_KEY` | Gemini |
+| `opencode.db` (SQLite) | OpenCode Zen |
+| Google Application Default Credentials | Vertex AI |
 
---- OpenRouter ------------------------------------------
-  Current Usage:    0/0 (0%)
-  Trend Analysis:   Insufficient historical data for this provider.
+---
 
---- GitHub Copilot ------------------------------------------
-  Current Usage:           187/300 (62%)
-  Forecasted Monthly:      228 requests
-  Estimated Overage:       $0.00 (Within Quota)
-  Prediction Confidence:   High
-  Recent Activity:
-    - 2026-02-23:   12 requests
-    - 2026-02-22:   15 requests
-    - 2026-02-21:   8 requests
-    - 2026-02-20:   2 requests
-    - 2026-02-19:   1 requests
+## Project structure
 
-Note: Predictions are estimates based on your recent 7-day weighted usage patterns.
+```
+cmd/quota/       CLI commands (status, list, report)
+pkg/providers/   One file per AI provider, auto-registered
+pkg/auth/        Credential discovery (auth.json, env vars, SQLite)
+pkg/display/     Adaptive table + JSON output
+pkg/predictor/   Weighted 7-day forecast engine
+pkg/models/      Shared data types
 ```
 
-## Project Structure
-
-- `cmd/`: Core Cobra CLI commands (`cmd/quota` module).
-- `pkg/`: Shared logic to consume data from API providers, models, authentication flow, and predictive engine.
-- `internal/`: Internal application configurations and hidden behavior.
+---
 
 ## Development
 
-- **Run locally**: `go run main.go [command]`
-- **Build**: `go build -o qcli main.go`
-- **Format code**: `go fmt ./...`
-- **Run tests**: `go test ./...`
+```bash
+go run main.go status      # Run locally
+go build -o qcli main.go   # Build binary
+go fmt ./...               # Format
+go test ./...              # Test
+```
+
+To cut a release (triggers GoReleaser + Homebrew tap update):
+```bash
+git tag v1.2.3
+git push origin v1.2.3
+```
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT](LICENSE)

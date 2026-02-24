@@ -3,18 +3,28 @@ version: 2
 before:
   hooks:
     - go mod tidy
-    - go generate ./...
 
 builds:
   - env:
       - CGO_ENABLED=0
     goos:
       - linux
-      - windows
       - darwin
     goarch:
       - amd64
       - arm64
+    main: ./main.go
+    binary: qcli
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+
+  - id: windows
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+    goarch:
+      - amd64
     main: ./main.go
     binary: qcli
 
@@ -24,13 +34,17 @@ archives:
       {{ .ProjectName }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
+      {{- else if eq .Arch "arm64" }}arm64
       {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
     format_overrides:
       - goos: windows
         format: zip
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: "checksums.txt"
 
 changelog:
   sort: asc
@@ -38,16 +52,24 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+      - "^chore:"
+      - Merge pull request
+      - Merge remote-tracking
 
-# Uncomment to automatically publish to a Homebrew Tap
-# brews:
-#   - repository:
-#       owner: JValdivia23
-#       name: homebrew-tap
-#       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-#     commit_author:
-#       name: goreleaserbot
-#       email: bot@goreleaser.com
-#     directory: Formula
-#     homepage: "https://github.com/JValdivia23/quota-cli"
-#     description: "A fast, cross-platform CLI to measure AI quotas."
+brews:
+  - name: qcli
+    repository:
+      owner: JValdivia23
+      name: homebrew-opencode-bar-curated
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    directory: Formula
+    homepage: "https://github.com/JValdivia23/quota-cli"
+    description: "Fast cross-platform CLI to monitor AI provider quotas (Claude, OpenAI, Copilot, Gemini, OpenRouter, Vertex)."
+    license: "MIT"
+    test: |
+      system "#{bin}/qcli", "--help"
+    install: |
+      bin.install "qcli"
