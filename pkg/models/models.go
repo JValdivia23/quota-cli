@@ -4,8 +4,9 @@ package models
 type ProviderType string
 
 const (
-	TypePayAsYouGo = "pay-as-you-go"
-	TypeQuotaBased = "quota-based"
+	TypePayAsYouGo  = "pay-as-you-go"
+	TypeQuotaBased  = "quota-based"
+	TypeTokensBased = "tokens-based"
 )
 
 // ProviderReport contains all unified metrics for a single provider.
@@ -22,6 +23,9 @@ type ProviderReport struct {
 
 	// Pay-As-You-Go metrics
 	Cost float64 `json:"cost,omitempty"`
+
+	// Tokens-based metrics
+	TokensUsed int64 `json:"tokensUsed,omitempty"`
 
 	// Multiple accounts (e.g. Gemini CLI)
 	Accounts []Account `json:"accounts,omitempty"`

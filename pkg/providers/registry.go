@@ -1,6 +1,11 @@
 package providers
 
-import "github.com/JValdivia23/quota-cli/pkg/models"
+import (
+	"context"
+
+	"github.com/JValdivia23/quota-cli/pkg/models"
+	"golang.org/x/oauth2/google"
+)
 
 // GetActiveProviders returns a list of configured providers from the auth.json
 // and filters them down if a specific flags is set.
@@ -20,6 +25,15 @@ func GetActiveProviders(cfg *models.OpenCodeAuthConfig, provFlag string) []Provi
 	for _, p := range allProviders {
 		// If the user requested a specific provider via command line flag, filter it
 		if provFlag != "" && p.Name() != provFlag {
+			continue
+		}
+
+		if p.Name() == "Vertex AI" {
+			// Vertex uses Application Default Credentials dynamically
+			_, err := google.FindDefaultCredentials(context.Background(), "https://www.googleapis.com/auth/cloud-platform")
+			if err == nil {
+				active = append(active, p)
+			}
 			continue
 		}
 

@@ -52,6 +52,13 @@ func PrintTable(reports []*models.ProviderReport) {
 			} else {
 				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", req.Name, refreshStr, usageStr, metricStr)
 			}
+		} else if req.Type == models.TypeTokensBased {
+			// Tokens based metric
+			refreshStr := req.RefreshTime
+			if refreshStr == "" {
+				refreshStr = "-"
+			}
+			fmt.Fprintf(w, "%s\t%s\t-\t%d tokens used\n", req.Name, refreshStr, req.TokensUsed)
 		} else {
 			// Pay as you go
 			fmt.Fprintf(w, "%s\t-\t-\t$%.2f spent\n", req.Name, req.Cost)
