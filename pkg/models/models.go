@@ -21,6 +21,9 @@ type ProviderReport struct {
 	OveragePermitted bool   `json:"overagePermitted,omitempty"`
 	RefreshTime      string `json:"refreshTime,omitempty"`
 
+	// Error state (non-fatal: provider was found but fetch failed)
+	ErrorMsg string `json:"error,omitempty"`
+
 	// Pay-As-You-Go metrics
 	Cost float64 `json:"cost,omitempty"`
 

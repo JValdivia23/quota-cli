@@ -3,7 +3,10 @@ package providers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"time"
 
 	"github.com/JValdivia23/quota-cli/pkg/models"
 )
@@ -25,16 +28,13 @@ func (c *OpenAIProvider) Fetch(ctx context.Context, cfg *models.OpenCodeAuthConf
 		token = cfg.GetKey(c.Name())
 	}
 
-	// If no real token, return mock data for testing as requested
+	// If no real token, do not return mock data
 	if token == "" || token == "sk-openai-mock" {
 		return &models.ProviderReport{
-			Name:            c.Name(),
-			Type:            models.TypeQuotaBased,
-			Remaining:       80,
-			Entitlement:     100,
-			UsagePercentage: 20,
-			RefreshTime:     "Weekly",
-		}, nil
+			Name:        c.Name(),
+			Type:        models.TypeQuotaBased,
+			RefreshTime: "Token Missing or Mock",
+		}, fmt.Errorf("invalid or missing OpenAI token")
 	}
 
 	accountID := cfg.GetNestedField("openai", "accountId")
@@ -55,33 +55,48 @@ func (c *OpenAIProvider) Fetch(ctx context.Context, cfg *models.OpenCodeAuthConf
 		return nil, err
 	}
 	defer resp.Body.Close()
+	bodyBytes, _ := io.ReadAll(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
-		// Log error and return mock if it's just a test environment
 		return &models.ProviderReport{
-			Name:            c.Name(),
-			Type:            models.TypeQuotaBased,
-			Remaining:       80,
-			Entitlement:     100,
-			UsagePercentage: 20,
-			RefreshTime:     "Weekly",
-		}, nil
+			Name:        c.Name(),
+			Type:        models.TypeQuotaBased,
+			RefreshTime: "Token Expired or " + string(bodyBytes),
+		}, fmt.Errorf("API failed with status %d", resp.StatusCode)
 	}
 
 	var result struct {
-		PrimaryWindow struct {
-			UsedPercent float64 `json:"used_percent"`
-		} `json:"primary_window"`
+		RateLimit struct {
+			PrimaryWindow struct {
+				UsedPercent float64 `json:"used_percent"`
+				ResetAt     int64   `json:"reset_at"`
+			} `json:"primary_window"`
+		} `json:"rate_limit"`
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	if err := json.Unmarshal(bodyBytes, &result); err != nil {
 		return nil, err
 	}
 
-	usage := int(result.PrimaryWindow.UsedPercent)
+	// Calculate used percentage
+	usage := int(result.RateLimit.PrimaryWindow.UsedPercent)
+	if usage > 100 {
+		usage = 100
+	} else if usage < 0 {
+		usage = 0
+	}
 	remaining := 100 - usage
-	if remaining < 0 {
-		remaining = 0
+
+	// Format refresh time
+	refreshTimeStr := "Weekly" // fallback
+	if result.RateLimit.PrimaryWindow.ResetAt > 0 {
+		resetTime := time.Unix(result.RateLimit.PrimaryWindow.ResetAt, 0)
+		days := int(time.Until(resetTime).Hours() / 24)
+		if days > 0 {
+			refreshTimeStr = fmt.Sprintf("Weekly: in %dd (%s)", days, resetTime.Format("01/02"))
+		} else {
+			refreshTimeStr = fmt.Sprintf("Weekly: %s", resetTime.Format("01/02 15:04"))
+		}
 	}
 
 	return &models.ProviderReport{
@@ -90,7 +105,7 @@ func (c *OpenAIProvider) Fetch(ctx context.Context, cfg *models.OpenCodeAuthConf
 		Remaining:       remaining,
 		Entitlement:     100,
 		UsagePercentage: usage,
-		RefreshTime:     "Weekly",
+		RefreshTime:     refreshTimeStr,
 	}, nil
 }
 

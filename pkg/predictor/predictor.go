@@ -47,7 +47,7 @@ func CalculatePrediction(history []models.DailyUsage, currentUsage *models.Provi
 
 	// 4. Forecast
 	projectedFutureUsage := (weightedAvg * float64(remainingWeekdays)) + (weightedAvg * weekendRatio * float64(remainingWeekends))
-	
+
 	// Total = current usage from report + projected future
 	// Current total usage for the month is usedRequests
 	currentTotal := float64(currentUsage.Entitlement - currentUsage.Remaining)

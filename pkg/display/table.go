@@ -23,6 +23,12 @@ func PrintTable(reports []*models.ProviderReport) {
 	fmt.Fprintln(w, "───────────\t───────────────\t────────\t────────────────")
 
 	for _, req := range reports {
+		// If the provider had a fetch error, show a clean error row
+		if req.ErrorMsg != "" {
+			fmt.Fprintf(w, "%s\t(unavailable)\t-\t⚠ %s\n", req.Name, req.ErrorMsg)
+			continue
+		}
+
 		if req.Type == models.TypeQuotaBased {
 			used := req.Entitlement - req.Remaining
 			usagePct := 0

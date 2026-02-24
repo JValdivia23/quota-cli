@@ -2,6 +2,7 @@ package providers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/JValdivia23/quota-cli/pkg/models"
 )
@@ -18,16 +19,11 @@ func (c *GoogleAIStudioProvider) Type() models.ProviderType {
 }
 
 func (c *GoogleAIStudioProvider) Fetch(ctx context.Context, cfg *models.OpenCodeAuthConfig) (*models.ProviderReport, error) {
-	// Mocking data for the v1 implementation
 	return &models.ProviderReport{
-		Name:             c.Name(),
-		Type:             c.Type(),
-		Remaining:        50,
-		Entitlement:      100,
-		UsagePercentage:  50,
-		OveragePermitted: false,
-		RefreshTime:      "Tomorrow",
-	}, nil
+		Name:        c.Name(),
+		Type:        c.Type(),
+		RefreshTime: "(Not Implemented)",
+	}, fmt.Errorf("Google AI Studio quota checking is not yet implemented")
 }
 
 func (c *GoogleAIStudioProvider) FetchHistory(ctx context.Context, cfg *models.OpenCodeAuthConfig) ([]models.DailyUsage, error) {

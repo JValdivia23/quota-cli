@@ -22,7 +22,7 @@ Running 'quota' without arguments will fetch and display the current quota usage
 	Run: func(cmd *cobra.Command, args []string) {
 		// Default behavior: Fetch and display quota
 		fmt.Println("Fetching current quota usage...")
-		
+
 		// TODO: Extract project from config or arguments. Hardcoding for now.
 		mockProject := "UCB-123"
 		data, err := opencodebar.FetchQuota(mockProject)
@@ -30,7 +30,7 @@ Running 'quota' without arguments will fetch and display the current quota usage
 			fmt.Printf("Error fetching quota: %v\n", err)
 			return
 		}
-		
+
 		fmt.Print(opencodebar.FormatQuota(data))
 	},
 }

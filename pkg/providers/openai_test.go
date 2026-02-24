@@ -18,22 +18,16 @@ func TestOpenAIProvider_Fetch(t *testing.T) {
 		t.Errorf("Expected TypeQuotaBased, got %v", provider.Type())
 	}
 
-	report, err := provider.Fetch(context.Background(), &models.OpenCodeAuthConfig{
+	// With invalid/mock token, we expect a real API error (no mock data)
+	_, err := provider.Fetch(context.Background(), &models.OpenCodeAuthConfig{
 		RawKeys: map[string]interface{}{
 			"openai": map[string]interface{}{
 				"access": "mock-key",
 			},
 		},
 	})
-	if err != nil {
-		t.Fatalf("Fetch failed: %v", err)
+	if err == nil {
+		t.Fatal("Expected an error for an invalid token, but got nil (mock data may still be active)")
 	}
-
-	if report.Name != "OpenAI" {
-		t.Errorf("Expected report name OpenAI, got %s", report.Name)
-	}
-
-	if report.Entitlement != 100 {
-		t.Errorf("Expected entitlement 100, got %d", report.Entitlement)
-	}
+	// error is expected and acceptable — provider is honest
 }
